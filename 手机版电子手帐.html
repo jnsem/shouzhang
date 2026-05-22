@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>治愈系全能规划手帐</title>
+<style>
+:root {
+  --bg: #FAF3E0;
+  --primary: #E8A87C;
+  --secondary: #A8D5BA;
+  --accent: #D4C5F9;
+  --highlight: #C9A96E;
+  --text: #5D4E37;
+  --text-light: #8B7E6A;
+  --white: #FFFDF7;
+  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.04);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --tab-height: 68px;
+  --safe-bottom: env(safe-area-inset-bottom, 12px);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: #f0ebe0;
+  color: var(--text);
+  height: 100%;
+  overflow: hidden;
+}
+.app-container {
+  max-width: 430px;
+  margin: 0 auto;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(0,0,0,0.08);
+}
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px 16px 0;
+  padding-bottom: calc(var(--tab-height) + var(--safe-bottom) + 16px);
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  height: calc(var(--tab-height) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 100;
+  box-shadow: 0 -2px 12px rgba(0,0,0,0.05);
+  border-radius: 16px 16px 0 0;
+}
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 10px;
+  min-width: 52px;
+  min-height: 48px;
+  -webkit-tap-highlight-color: transparent;
+}
+.nav-item:active { transform: scale(0.92); }
+.nav-item .nav-icon { font-size: 22px; transition: transform 0.2s; }
+.nav-item .nav-label { font-size: 10px; color: var(--text-light); font-weight: 500; }
+.nav-item.active .nav-label { color: var(--primary); font-weight: 700; }
+.nav-item.active .nav-icon { transform: translateY(-2px); }
+.nav-item.active { background: rgba(232,168,124,0.12); }
+
+/* Pages */
+.page {
+  display: none;
+  animation: fadeIn 0.25s ease;
+}
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Cards */
+.card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+}
+.card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Sub-tabs */
+.sub-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 8px 0;
+  margin-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.sub-tabs::-webkit-scrollbar { display: none; }
+.sub-tab {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  background: var(--white);
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1.5px solid transparent;
+  white-space: nowrap;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+}
+.sub-tab:active { transform: scale(0.94); }
+.sub-tab.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+/* Inputs & Textareas */
+input[type="text"], textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid #e8ddd0;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--white);
+  outline: none;
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+input[type="text"]:focus, textarea:focus {
+  border-color: var(--primary);
+}
+textarea {
+  resize: vertical;
+  min-height: 60px;
+  line-height: 1.5;
+}
+
+/* Checkbox custom */
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+.check-circle {
+  width: 36px; height: 36px;
+  min-width: 36px;
+  border-radius: 50%;
+  border: 2px solid #d5c8b5;
+  cursor: pointer;
+  transition: all 0.25s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  background: var(--white);
+}
+.check-circle:active { transform: scale(0.88); }
+.check-circle.done {
+  background: var(--secondary);
+  border-color: var(--secondary);
+  color: #fff;
+}
+
+/* Buttons */
+.btn {
+  padding: 10px 20px;
+  border-radius: 20px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--primary);
+  color: #fff;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.btn:active { transform: scale(0.94); opacity: 0.85; }
+.btn-sm { padding: 6px 14px; font-size: 12px; min-height: 32px; }
+.btn-outline { background: transparent; color: var(--primary); border: 1.5px solid var(--primary); }
+.btn-ghost { background: rgba(232,168,124,0.1); color: var(--primary); }
+
+/* Progress bar */
+.progress-bar {
+  height: 8px;
+  background: #e8ddd0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 4px 0;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+/* Emoji selector */
+.emoji-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.emoji-btn {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: 2px solid #e8ddd0;
+  background: var(--white);
+  font-size: 22px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.emoji-btn:active { transform: scale(0.88); }
+.emoji-btn.selected {
+  border-color: var(--primary);
+  background: rgba(232,168,124,0.15);
+  box-shadow: 0 0 0 3px rgba(232,168,124,0.2);
+}
+
+/* Color circles for mood */
+.color-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.color-circle {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 3px solid transparent;
+}
+.color-circle:active { transform: scale(0.88); }
+.color-circle.selected { border-color: var(--text); box-shadow: 0 0 0 4px rgba(93,78,55,0.12); }
+
+/* Habit circles */
+.habit-grid {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.habit-dot {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid #d5c8b5;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--white);
+  flex-shrink: 0;
+}
+.habit-dot:active { transform: scale(0.82); }
+.habit-dot.done { background: var(--secondary); border-color: var(--secondary); color: #fff; }
+.habit-dot.missed { background: #f0c8c8; border-color: #e8a0a0; color: #fff; }
+
+/* Weather */
+.weather-row { display: flex; gap: 8px; }
+.weather-btn {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: 2px solid #e8ddd0;
+  background: var(--white);
+  font-size: 22px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.weather-btn:active { transform: scale(0.88); }
+.weather-btn.selected { border-color: var(--highlight); background: rgba(201,169,110,0.12); }
+
+/* Time axis */
+.time-slot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed #e8ddd0;
+  cursor: pointer;
+  transition: all 0.15s;
+  min-height: 40px;
+  border-radius: 6px;
+  padding: 8px;
+}
+.time-slot:active { background: rgba(232,168,124,0.08); }
+.time-slot.selected { background: rgba(232,168,124,0.12); }
+.time-label {
+  font-size: 12px;
+  color: var(--text-light);
+  min-width: 42px;
+  font-weight: 600;
+}
+
+/* Month selector */
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.month-nav .arrow {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--white);
+  border: 1.5px solid #e8ddd0;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.month-nav .arrow:active { transform: scale(0.88); background: rgba(232,168,124,0.1); }
+.month-nav .month-label { font-size: 17px; font-weight: 700; min-width: 100px; text-align: center; }
+
+/* Status badge */
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.status-badge:active { transform: scale(0.92); }
+.status-badge.ongoing { background: rgba(168,213,186,0.3); color: #5a9e6f; }
+.status-badge.done-tag { background: rgba(232,168,124,0.25); color: #b8753f; }
+.status-badge.paused { background: rgba(212,197,249,0.3); color: #7b6db5; }
+
+/* Cover */
+.cover-preview {
+  background: linear-gradient(135deg, #fce8d5 0%, #f8dcc8 30%, #f9e8d9 60%, #fce8d5 100%);
+  border-radius: var(--radius);
+  padding: 24px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.cover-preview::before {
+  content: '';
+  position: absolute;
+  top: -30px; right: -30px;
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: rgba(232,168,124,0.15);
+}
+.cover-preview::after {
+  content: '';
+  position: absolute;
+  bottom: -20px; left: -20px;
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  background: rgba(168,213,186,0.15);
+}
+
+/* Decorative dots */
+.dot-deco {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* Welcome overlay */
+.welcome-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s;
+}
+.welcome-card {
+  background: var(--white);
+  border-radius: 20px;
+  padding: 28px 24px;
+  text-align: center;
+  max-width: 320px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+.welcome-card h3 { font-size: 20px; margin-bottom: 8px; }
+.welcome-card p { font-size: 14px; color: var(--text-light); line-height: 1.6; margin-bottom: 16px; }
+
+/* History list */
+.history-item {
+  padding: 10px 12px;
+  background: rgba(250,243,224,0.5);
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+/* Mood thermometer */
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(to right, #a0c0f0, #e8ddd0, #f0c8a0);
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--white);
+  border: 2px solid var(--primary);
+  cursor: pointer;
+}
+
+/* Responsive adjustments */
+@media (max-width: 380px) {
+  .habit-dot { width: 24px; height: 24px; font-size: 10px; }
+  .check-circle { width: 32px; height: 32px; min-width: 32px; }
+  .sub-tab { padding: 6px 12px; font-size: 12px; }
+}
+</style>
+</head>
+<body>
+<div id="browserHint" style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#FFF3E0;border-bottom:2px solid #E8A87C;padding:14px 16px;text-align:center;font-size:14px;color:#5D4E37;font-family:-apple-system,sans-serif;display:block;">
+  ⚠️ <b>请在浏览器中打开</b>以获得完整体验<br>
+  <span style="font-size:12px;color:#8B7E6A;">当前App内查看仅可预览，请用 Safari / Chrome 打开此文件</span>
+</div>
+<script>setTimeout(function(){var h=document.getElementById('browserHint');if(h)h.style.display='none';},1);</script>
+<div class="app-container" id="appContainer">
+  <div class="main-content" id="mainContent">
+    <!-- ==================== HOME PAGE ==================== -->
+    <div class="page active" id="page-home">
+      <div style="padding:8px 0 4px; position:relative;">
+        <div style="font-size:36px;font-weight:800;color:var(--text);" id="homeDate"></div>
+        <div style="font-size:15px;color:var(--text-light);margin-top:2px;" id="homeWeekday"></div>
+        <div style="font-size:13px;color:var(--primary);margin-top:6px;font-style:italic;" id="homeQuote">今天也是值得认真对待的一天 ✨</div>
+        <div class="dot-deco" style="top:10px;right:10px;width:12px;height:12px;background:rgba(232,168,124,0.25);"></div>
+        <div class="dot-deco" style="top:30px;right:30px;width:8px;height:8px;background:rgba(168,213,186,0.3);"></div>
+        <div class="dot-deco" style="top:20px;right:50px;width:6px;height:6px;background:rgba(212,197,249,0.35);"></div>
+      </div>
+
+      <div class="card" style="display:flex;gap:10px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:90px;text-align:center;padding:10px 6px;">
+          <div style="font-size:12px;color:var(--text-light);margin-bottom:4px;">📋 今日待办</div>
+          <div style="font-size:28px;font-weight:700;color:var(--primary);" id="overviewTodos">0</div>
+          <div style="font-size:11px;color:var(--text-light);">项未完成</div>
+        </div>
+        <div style="flex:1;min-width:90px;text-align:center;padding:10px 6px;border-left:1px solid #eee;border-right:1px solid #eee;">
+          <div style="font-size:12px;color:var(--text-light);margin-bottom:4px;">💜 今日心情</div>
+          <div style="font-size:28px;" id="overviewMood">—</div>
+          <div style="font-size:11px;color:var(--text-light);" id="overviewMoodLabel">还未记录</div>
+        </div>
+        <div style="flex:1;min-width:90px;text-align:center;padding:10px 6px;">
+          <div style="font-size:12px;color:var(--text-light);margin-bottom:4px;">🌱 习惯进度</div>
+          <div style="font-size:28px;font-weight:700;color:var(--secondary);" id="overviewHabits">0/0</div>
+          <div style="font-size:11px;color:var(--text-light);">今日完成</div>
+        </div>
+      </div>
+
+      <div class="cover-preview">
+        <div style="font-size:40px;margin-bottom:8px;">📔</div>
+        <div style="font-size:17px;font-weight:700;color:var(--text);">我的生活规划手帐</div>
+        <div style="font-size:12px;color:var(--text-light);margin-top:4px;">2026 · 用心记录每一天</div>
+        <div style="margin-top:8px;font-size:22px;">🌸 ✨ 🌿</div>
+      </div>
+      <div style="text-align:center;padding:8px;font-size:11px;color:var(--text-light);">💛 每一天，都值得被温柔对待</div>
+    </div>
+
+    <!-- ==================== PLAN PAGE ==================== -->
+    <div class="page" id="page-plan">
+      <div class="sub-tabs" id="planSubTabs">
+        <div class="sub-tab active" data-sub="plan-year">🎯 年度愿景</div>
+        <div class="sub-tab" data-sub="plan-month">📆 月度计划</div>
+        <div class="sub-tab" data-sub="plan-week">📋 周计划</div>
+        <div class="sub-tab" data-sub="plan-day">☀️ 日计划</div>
+      </div>
+
+      <!-- Year -->
+      <div class="sub-page active" id="sub-plan-year">
+        <div class="card">
+          <div class="card-title">🎯 2026 年度愿景</div>
+          <div style="font-size:13px;color:var(--text-light);margin-bottom:6px;">今年最重要的3件事</div>
+          <input type="text" data-key="year_goal1" placeholder="第一件重要的事…" style="margin-bottom:6px;">
+          <input type="text" data-key="year_goal2" placeholder="第二件重要的事…" style="margin-bottom:6px;">
+          <input type="text" data-key="year_goal3" placeholder="第三件重要的事…">
+        </div>
+        <div class="card">
+          <div class="card-title">🏷️ 年度关键词</div>
+          <input type="text" data-key="year_keyword" placeholder="用一个词概括你的2026…">
+        </div>
+        <div class="card">
+          <div class="card-title">🌟 愿望清单</div>
+          <div id="wishlistContainer"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">💌 给自己的寄语</div>
+          <textarea data-key="year_message" placeholder="写给一年后的自己…" style="min-height:80px;"></textarea>
+        </div>
+      </div>
+
+      <!-- Month -->
+      <div class="sub-page" id="sub-plan-month" style="display:none;">
+        <div class="month-nav">
+          <div class="arrow" id="monthPrev">◀</div>
+          <div class="month-label" id="monthLabel">2026年1月</div>
+          <div class="arrow" id="monthNext">▶</div>
+        </div>
+        <div class="card">
+          <div class="card-title">🎯 本月目标</div>
+          <div id="monthGoals"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">📌 本月重要事项</div>
+          <div id="monthImportant"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">✅ 本月习惯</div>
+          <div id="monthHabits"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">😊 本月心情</div>
+          <div class="emoji-row" id="monthMood"></div>
+        </div>
+      </div>
+
+      <!-- Week -->
+      <div class="sub-page" id="sub-plan-week" style="display:none;">
+        <div class="month-nav"><div class="arrow" id="weekPrev">◀</div><div style="font-size:16px;font-weight:700;" id="weekLabel"></div><div class="arrow" id="weekNext">▶</div></div>
+        <div class="card">
+          <div class="card-title">📋 本周计划</div>
+          <div id="weekDays"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">⭐ 本周优先</div>
+          <input type="text" data-key="week_priority1" placeholder="优先事项 1" style="margin-bottom:6px;">
+          <input type="text" data-key="week_priority2" placeholder="优先事项 2" style="margin-bottom:6px;">
+          <input type="text" data-key="week_priority3" placeholder="优先事项 3">
+        </div>
+        <div class="card">
+          <div class="card-title">💛 本周感恩</div>
+          <input type="text" data-key="week_gratitude" placeholder="这周最想感恩的事…">
+        </div>
+        <div class="card">
+          <div class="card-title">📝 周末小结</div>
+          <textarea data-key="week_summary" placeholder="这周的收获与反思…"></textarea>
+        </div>
+      </div>
+
+      <!-- Day -->
+      <div class="sub-page" id="sub-plan-day" style="display:none;">
+        <div class="month-nav"><div class="arrow" id="dayPrev">◀</div><div style="font-size:16px;font-weight:700;" id="dayLabel"></div><div class="arrow" id="dayNext">▶</div></div>
+        <div class="card">
+          <div class="card-title">🌤️ 天气</div>
+          <div class="weather-row" id="weatherRow"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">⏰ 时间轴</div>
+          <div id="timeAxis"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">✅ 今日待办</div>
+          <div id="dayTodos"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">🌟 今日三件好事</div>
+          <input type="text" data-key="day_good1" placeholder="第一件好事…" style="margin-bottom:6px;">
+          <input type="text" data-key="day_good2" placeholder="第二件好事…" style="margin-bottom:6px;">
+          <input type="text" data-key="day_good3" placeholder="第三件好事…">
+        </div>
+        <div class="card">
+          <div class="card-title">💜 今日心情</div>
+          <div class="emoji-row" id="dayMood"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">💬 对自己说</div>
+          <input type="text" data-key="day_selfTalk" placeholder="今天想对自己说什么…">
+        </div>
+        <div class="card">
+          <div class="card-title">🙏 今日感恩</div>
+          <input type="text" data-key="day_gratitude" placeholder="今天最感恩的一件事…">
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== HABITS PAGE ==================== -->
+    <div class="page" id="page-habits">
+      <div style="font-size:18px;font-weight:700;margin-bottom:4px;">🌱 习惯追踪 · 30天挑战</div>
+      <div style="font-size:12px;color:var(--text-light);margin-bottom:12px;">点击小圆圈记录每一天</div>
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11px;color:var(--text-light);">
+          <span style="min-width:70px;"></span>
+          <div style="display:flex;gap:2px;overflow-x:auto;flex:1;" id="habitDayLabels"></div>
+        </div>
+        <div id="habitRows"></div>
+      </div>
+      <div class="card" style="background:rgba(168,213,186,0.1);">
+        <div class="card-title">💡 习惯养成小贴士</div>
+        <div style="font-size:12px;color:var(--text-light);line-height:1.8;">
+          🌟 从小目标开始，不要贪多<br>
+          ⏰ 固定时间做固定事，形成节奏<br>
+          🎉 每完成7天给自己一个小奖励<br>
+          💪 偶尔中断没关系，第二天继续就好
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📊 30天进度</div>
+        <div class="progress-bar"><div class="progress-fill" id="habitProgressBar" style="width:0%;"></div></div>
+        <div style="font-size:12px;color:var(--text-light);margin-top:4px;" id="habitProgressText">完成 0 / 180</div>
+      </div>
+    </div>
+
+    <!-- ==================== MOOD PAGE ==================== -->
+    <div class="page" id="page-mood">
+      <div class="sub-tabs" id="moodSubTabs">
+        <div class="sub-tab active" data-sub="mood-emotion">🎨 情绪记录</div>
+        <div class="sub-tab" data-sub="mood-gratitude">🙏 感恩日记</div>
+      </div>
+
+      <!-- Emotion -->
+      <div class="sub-page active" id="sub-mood-emotion">
+        <div class="card">
+          <div class="card-title">🎨 今日情绪色卡</div>
+          <div class="color-row" id="emotionColors"></div>
+          <div style="margin-top:10px;">
+            <textarea data-key="emotion_reason" placeholder="什么让你产生了这种情绪？（可选）" style="min-height:50px;"></textarea>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">🌡️ 情绪温度计</div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-light);margin-bottom:4px;">
+            <span>😢 -5</span><span>😐 0</span><span>😄 +5</span>
+          </div>
+          <input type="range" min="-5" max="5" value="0" id="emotionThermometer" data-key="emotion_thermometer">
+          <div style="text-align:center;font-size:13px;margin-top:4px;font-weight:600;" id="emotionThermoLabel">中性 😐</div>
+        </div>
+        <div class="card">
+          <div class="card-title">📅 最近7天情绪</div>
+          <div id="emotionHistory"></div>
+        </div>
+        <div class="card" style="background:rgba(212,197,249,0.1);">
+          <div class="card-title">🩹 情绪急救包</div>
+          <div style="font-size:12px;color:var(--text-light);line-height:1.8;">
+            🧘 深呼吸3次，感受当下<br>
+            🚶 出去走5分钟，看看天空<br>
+            🎵 听一首喜欢的老歌<br>
+            📞 给信任的人发一条消息
+          </div>
+        </div>
+      </div>
+
+      <!-- Gratitude -->
+      <div class="sub-page" id="sub-mood-gratitude" style="display:none;">
+        <div class="card" style="text-align:center;background:linear-gradient(135deg,rgba(232,168,124,0.08),rgba(212,197,249,0.08));">
+          <div style="font-size:16px;font-weight:700;color:var(--primary);">"每一天都值得感恩"</div>
+          <div style="font-size:13px;color:var(--text-light);margin-top:4px;" id="gratitudeDate"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">🙏 今天感恩的三件事</div>
+          <input type="text" data-key="gratitude1" placeholder="感恩的事 1…" style="margin-bottom:6px;">
+          <input type="text" data-key="gratitude2" placeholder="感恩的事 2…" style="margin-bottom:6px;">
+          <input type="text" data-key="gratitude3" placeholder="感恩的事 3…">
+        </div>
+        <div class="card">
+          <div class="card-title">🍀 今日小确幸</div>
+          <input type="text" data-key="gratitude_littleJoy" placeholder="今天的一个小确幸…">
+        </div>
+        <button class="btn" id="saveGratitude" style="width:100%;margin-bottom:8px;">💾 保存感恩日记</button>
+        <div class="card">
+          <div class="card-title">📅 最近7天感恩</div>
+          <div id="gratitudeHistory"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== MORE PAGE ==================== -->
+    <div class="page" id="page-more">
+      <div class="sub-tabs" id="moreSubTabs">
+        <div class="sub-tab active" data-sub="more-project">📊 项目追踪</div>
+        <div class="sub-tab" data-sub="more-note">📝 自由笔记</div>
+      </div>
+
+      <!-- Project -->
+      <div class="sub-page active" id="sub-more-project">
+        <div id="projectCards"></div>
+      </div>
+
+      <!-- Note -->
+      <div class="sub-page" id="sub-more-note" style="display:none;">
+        <div class="card">
+          <div style="display:flex;gap:6px;margin-bottom:8px;">
+            <input type="text" data-key="note_tag" placeholder="🏷️ 话题/日期/心情标签" style="flex:1;">
+          </div>
+          <textarea data-key="note_content" placeholder="在这里自由书写…" style="min-height:200px;background-image:radial-gradient(circle,#e8ddd0 1px,transparent 1px);background-size:20px 20px;"></textarea>
+          <button class="btn" id="saveNote" style="width:100%;margin-top:8px;">💾 保存笔记</button>
+        </div>
+        <div class="card">
+          <div class="card-title">📚 历史笔记</div>
+          <div id="notesHistory"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav" id="bottomNav">
+    <div class="nav-item active" data-page="home">
+      <span class="nav-icon">🏠</span><span class="nav-label">首页</span>
+    </div>
+    <div class="nav-item" data-page="plan">
+      <span class="nav-icon">📅</span><span class="nav-label">规划</span>
+    </div>
+    <div class="nav-item" data-page="habits">
+      <span class="nav-icon">✅</span><span class="nav-label">习惯</span>
+    </div>
+    <div class="nav-item" data-page="mood">
+      <span class="nav-icon">💜</span><span class="nav-label">心情</span>
+    </div>
+    <div class="nav-item" data-page="more">
+      <span class="nav-icon">📝</span><span class="nav-label">更多</span>
+    </div>
+  </nav>
+</div>
+
+<!-- Welcome Overlay -->
+<div class="welcome-overlay" id="welcomeOverlay" style="display:none;">
+  <div class="welcome-card">
+    <div style="font-size:48px;margin-bottom:8px;">📔✨</div>
+    <h3>欢迎来到你的规划手帐</h3>
+    <p>这是一本会一直陪着你的电子手帐～<br>记录计划、追踪习惯、安放心情。<br><br><strong>你的每一次记录都会被自动保存 💛</strong></p>
+    <button class="btn" id="welcomeClose" style="width:100%;">开始使用 🌸</button>
+  </div>
+</div>
+
+<script>
+// ==================== DATA MANAGER ====================
+const PREFIX = 'journal_';
+function gk(key) { return PREFIX + key; }
+function load(key, def) {
+  try { const v = localStorage.getItem(gk(key)); return v !== null ? JSON.parse(v) : def; }
+  catch { return def; }
+}
+function save(key, val) {
+  try { localStorage.setItem(gk(key), JSON.stringify(val)); }
+  catch(e) { console.warn('Storage full', e); }
+}
+
+function todayKey() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+// ==================== STATE ====================
+let currentPage = 'home';
+let currentPlanSub = 'plan-year';
+let currentMoodSub = 'mood-emotion';
+let currentMoreSub = 'more-project';
+let currentMonthOffset = 0;
+let currentDayOffset = 0;
+let currentWeekOffset = 0;
+let selectedEmotionColor = load('emotion_color_' + todayKey(), null);
+let selectedDayMood = load('day_mood_' + todayKey(), null);
+let selectedMonthMood = null;
+
+// ==================== DOM REFS ====================
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => document.querySelectorAll(s);
+
+// ==================== NAVIGATION ====================
+function switchPage(pageName) {
+  currentPage = pageName;
+  $$('.page').forEach(p => p.classList.remove('active'));
+  const pageEl = $('#page-' + pageName);
+  if (pageEl) pageEl.classList.add('active');
+  $$('.nav-item').forEach(n => n.classList.remove('active'));
+  const navEl = document.querySelector(`.nav-item[data-page="${pageName}"]`);
+  if (navEl) navEl.classList.add('active');
+  $('#mainContent').scrollTop = 0;
+  if (pageName === 'home') renderHome();
+  if (pageName === 'habits') renderHabits();
+  if (pageName === 'mood') renderMoodPage();
+  if (pageName === 'plan') renderPlanPage();
+  if (pageName === 'more') renderMorePage();
+}
+
+$$('.nav-item').forEach(item => {
+  item.addEventListener('click', () => switchPage(item.dataset.page));
+});
+
+// Sub-tab switching for Plan
+$('#planSubTabs').addEventListener('click', (e) => {
+  const tab = e.target.closest('.sub-tab');
+  if (!tab) return;
+  currentPlanSub = tab.dataset.sub;
+  $$('#planSubTabs .sub-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  $$('#page-plan .sub-page').forEach(p => p.style.display = 'none');
+  const subEl = $('#sub-' + currentPlanSub);
+  if (subEl) subEl.style.display = 'block';
+  renderPlanSubPage();
+});
+
+// Sub-tab switching for Mood
+$('#moodSubTabs').addEventListener('click', (e) => {
+  const tab = e.target.closest('.sub-tab');
+  if (!tab) return;
+  currentMoodSub = tab.dataset.sub;
+  $$('#moodSubTabs .sub-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  $$('#page-mood .sub-page').forEach(p => p.style.display = 'none');
+  const subEl = $('#sub-' + currentMoodSub);
+  if (subEl) subEl.style.display = 'block';
+  if (currentMoodSub === 'mood-gratitude') renderGratitude();
+  if (currentMoodSub === 'mood-emotion') renderEmotion();
+});
+
+// Sub-tab switching for More
+$('#moreSubTabs').addEventListener('click', (e) => {
+  const tab = e.target.closest('.sub-tab');
+  if (!tab) return;
+  currentMoreSub = tab.dataset.sub;
+  $$('#moreSubTabs .sub-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  $$('#page-more .sub-page').forEach(p => p.style.display = 'none');
+  const subEl = $('#sub-' + currentMoreSub);
+  if (subEl) subEl.style.display = 'block';
+  if (currentMoreSub === 'more-project') renderProjects();
+  if (currentMoreSub === 'more-note') renderNotes();
+});
+
+// ==================== HOME PAGE ====================
+function renderHome() {
+  const now = new Date();
+  const days = ['日','一','二','三','四','五','六'];
+  $('#homeDate').textContent = now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日';
+  $('#homeWeekday').textContent = '星期' + days[now.getDay()];
+  const quotes = [
+    '今天也是值得认真对待的一天 ✨',
+    '慢慢来，比较快 🌿',
+    '你比想象中更坚强 💪',
+    '每一天都是崭新的开始 🌅',
+    '温柔地对待自己 💛',
+    '小的进步也是进步 🌱',
+    '今天也要闪闪发光 ✨'
+  ];
+  const qi = now.getDate() % quotes.length;
+  $('#homeQuote').textContent = quotes[qi];
+
+  const tk = todayKey();
+  const dayTodos = load('day_todos_' + tk, []);
+  const undone = dayTodos.filter(t => !t.done).length;
+  $('#overviewTodos').textContent = undone;
+
+  const dayMoodEmoji = load('day_mood_' + tk, null);
+  if (dayMoodEmoji) {
+    $('#overviewMood').textContent = dayMoodEmoji;
+    $('#overviewMoodLabel').textContent = '已记录';
+  } else {
+    $('#overviewMood').textContent = '—';
+    $('#overviewMoodLabel').textContent = '还未记录';
+  }
+
+  const habitNames = load('habit_names', ['早起','阅读','运动','冥想','喝水','学习']);
+  const habitData = load('habit_data_' + tk, {});
+  let doneCount = 0;
+  habitNames.forEach((_, i) => { if (habitData[i] === 'done') doneCount++; });
+  $('#overviewHabits').textContent = doneCount + '/' + habitNames.length;
+}
+
+// ==================== PLAN PAGES ====================
+function renderPlanPage() { renderPlanSubPage(); }
+function renderPlanSubPage() {
+  if (currentPlanSub === 'plan-year') renderYearPlan();
+  if (currentPlanSub === 'plan-month') renderMonthPlan();
+  if (currentPlanSub === 'plan-week') renderWeekPlan();
+  if (currentPlanSub === 'plan-day') renderDayPlan();
+}
+
+function renderYearPlan() {
+  $$('#sub-plan-year [data-key]').forEach(el => {
+    el.value = load(el.dataset.key, '');
+  });
+  const container = $('#wishlistContainer');
+  container.innerHTML = '';
+  const wishes = load('year_wishes', Array(12).fill(''));
+  for (let i = 0; i < 12; i++) {
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:4px;';
+    div.innerHTML = `<span style="font-size:12px;color:var(--text-light);min-width:32px;">${i+1}月</span>`;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = wishes[i] || '';
+    input.placeholder = (i+1) + '月的小心愿…';
+    input.style.flex = '1';
+    input.dataset.wishIdx = i;
+    input.addEventListener('input', () => {
+      const w = load('year_wishes', Array(12).fill(''));
+      w[i] = input.value;
+      save('year_wishes', w);
+    });
+    div.appendChild(input);
+    container.appendChild(div);
+  }
+}
+
+function renderMonthPlan() {
+  const now = new Date();
+  now.setMonth(now.getMonth() + currentMonthOffset);
+  const y = now.getFullYear();
+  const m = now.getMonth() + 1;
+  $('#monthLabel').textContent = y + '年' + m + '月';
+  const mk = y + '-' + String(m).padStart(2,'0');
+  selectedMonthMood = load('month_mood_' + mk, null);
+
+  // Goals
+  const goals = load('month_goals_' + mk, ['','','']);
+  $('#monthGoals').innerHTML = goals.map((g,i) =>
+    `<div class="check-row">
+      <div class="check-circle${g.done?' done':''}" data-mgoal="${i}">${g.done?'✓':''}</div>
+      <input type="text" value="${g.text||''}" placeholder="目标 ${i+1}…" data-mgoal-text="${i}">
+    </div>`
+  ).join('');
+  // Important items
+  const imp = load('month_imp_' + mk, Array(5).fill({date:'',content:''}));
+  $('#monthImportant').innerHTML = imp.map((it,i) =>
+    `<div style="display:flex;gap:6px;margin-bottom:4px;align-items:center;">
+      <input type="text" value="${it.date||''}" placeholder="日期" style="width:80px;flex-shrink:0;" data-mimp-date="${i}">
+      <input type="text" value="${it.content||''}" placeholder="事项 ${i+1}" style="flex:1;" data-mimp-content="${i}">
+    </div>`
+  ).join('');
+  // Habits
+  const mh = load('month_habits_' + mk, ['','','','','','','']);
+  $('#monthHabits').innerHTML = mh.map((h,i) =>
+    `<div class="check-row">
+      <div class="check-circle${h.done?' done':''}" data-mhabit="${i}">${h.done?'✓':''}</div>
+      <input type="text" value="${h.text||''}" placeholder="习惯 ${i+1}" data-mhabit-text="${i}">
+    </div>`
+  ).join('');
+  // Mood
+  const moods = ['😄','😊','😐','😔','😢'];
+  $('#monthMood').innerHTML = moods.map(m =>
+    `<div class="emoji-btn${m===selectedMonthMood?' selected':''}" data-mmood="${m}">${m}</div>`
+  ).join('');
+  attachMonthEvents(mk);
+}
+
+function attachMonthEvents(mk) {
+  $$('#monthGoals .check-circle').forEach(c => {
+    c.addEventListener('click', () => {
+      const i = parseInt(c.dataset.mgoal);
+      const goals = load('month_goals_' + mk, [{text:'',done:false},{text:'',done:false},{text:'',done:false}]);
+      goals[i] = goals[i] || {text:'',done:false};
+      goals[i].done = !goals[i].done;
+      save('month_goals_' + mk, goals);
+      renderMonthPlan();
+    });
+  });
+  $$('#monthGoals input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const i = parseInt(inp.dataset.mgoalText);
+      const goals = load('month_goals_' + mk, [{text:'',done:false},{text:'',done:false},{text:'',done:false}]);
+      goals[i] = goals[i] || {text:'',done:false};
+      goals[i].text = inp.value;
+      save('month_goals_' + mk, goals);
+    });
+  });
+  $$('#monthImportant input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const imp = load('month_imp_' + mk, Array(5).fill({date:'',content:''}));
+      if (inp.dataset.mimpDate !== undefined) imp[parseInt(inp.dataset.mimpDate)].date = inp.value;
+      if (inp.dataset.mimpContent !== undefined) imp[parseInt(inp.dataset.mimpContent)].content = inp.value;
+      save('month_imp_' + mk, imp);
+    });
+  });
+  $$('#monthHabits .check-circle').forEach(c => {
+    c.addEventListener('click', () => {
+      const i = parseInt(c.dataset.mhabit);
+      const mh = load('month_habits_' + mk, Array(7).fill({text:'',done:false}));
+      mh[i] = mh[i] || {text:'',done:false};
+      mh[i].done = !mh[i].done;
+      save('month_habits_' + mk, mh);
+      renderMonthPlan();
+    });
+  });
+  $$('#monthHabits input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const i = parseInt(inp.dataset.mhabitText);
+      const mh = load('month_habits_' + mk, Array(7).fill({text:'',done:false}));
+      mh[i] = mh[i] || {text:'',done:false};
+      mh[i].text = inp.value;
+      save('month_habits_' + mk, mh);
+    });
+  });
+  $$('#monthMood .emoji-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedMonthMood = btn.dataset.mmood;
+      save('month_mood_' + mk, selectedMonthMood);
+      renderMonthPlan();
+    });
+  });
+}
+
+document.getElementById('monthPrev').addEventListener('click', () => { currentMonthOffset--; renderMonthPlan(); });
+document.getElementById('monthNext').addEventListener('click', () => { currentMonthOffset++; renderMonthPlan(); });
+document.getElementById('dayPrev').addEventListener('click', () => { currentDayOffset--; renderDayPlan(); });
+document.getElementById('dayNext').addEventListener('click', () => { currentDayOffset++; renderDayPlan(); });
+document.getElementById('weekPrev').addEventListener('click', () => { currentWeekOffset--; renderWeekPlan(); });
+document.getElementById('weekNext').addEventListener('click', () => { currentWeekOffset++; renderWeekPlan(); });
+
+function getWeekInfo(offset) {
+  const now = new Date();
+  now.setDate(now.getDate() + offset * 7);
+  const day = now.getDay();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  const weekNum = Math.ceil((monday.getTime() - new Date(monday.getFullYear(),0,1).getTime()) / (7*86400000));
+  return { weekNum, monday, sunday };
+}
+
+function renderWeekPlan() {
+  const wi = getWeekInfo(currentWeekOffset);
+  $('#weekLabel').textContent = '第' + wi.weekNum + '周 · ' +
+    (wi.monday.getMonth()+1) + '/' + wi.monday.getDate() + ' — ' +
+    (wi.sunday.getMonth()+1) + '/' + wi.sunday.getDate();
+  const wk = 'week_' + wi.weekNum + '_' + wi.monday.getFullYear();
+  const weekData = load('week_data_' + wk, {});
+  const dayNames = ['周一','周二','周三','周四','周五','周六','周日'];
+  let html = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(wi.monday);
+    d.setDate(d.getDate() + i);
+    const dk = (d.getMonth()+1) + '/' + d.getDate();
+    const dd = weekData['day' + i] || {checks:[false,false,false], highlight:''};
+    html += `<div style="margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #f0e8d8;">
+      <div style="font-weight:600;font-size:13px;margin-bottom:4px;">${dayNames[i]} ${dk}</div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        ${[0,1,2].map(j =>
+          `<div class="check-circle${dd.checks&&dd.checks[j]?' done':''}" style="width:32px;height:32px;min-width:32px;" data-wday="${i}" data-wcheck="${j}">${dd.checks&&dd.checks[j]?'✓':''}</div>`
+        ).join('')}
+        <input type="text" value="${dd.highlight||''}" placeholder="今日亮点" style="flex:1;min-width:100px;" data-wday="${i}" data-whighlight="1">
+      </div>
+    </div>`;
+  }
+  $('#weekDays').innerHTML = html;
+  attachWeekEvents(wk);
+  $$('#sub-plan-week [data-key]').forEach(el => {
+    el.value = load(el.dataset.key, '');
+  });
+}
+
+function attachWeekEvents(wk) {
+  $$('#weekDays .check-circle').forEach(c => {
+    c.addEventListener('click', () => {
+      const di = parseInt(c.dataset.wday);
+      const ci = parseInt(c.dataset.wcheck);
+      const wd = load('week_data_' + wk, {});
+      if (!wd['day'+di]) wd['day'+di] = {checks:[false,false,false], highlight:''};
+      wd['day'+di].checks[ci] = !wd['day'+di].checks[ci];
+      save('week_data_' + wk, wd);
+      renderWeekPlan();
+    });
+  });
+  $$('#weekDays input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const di = parseInt(inp.dataset.wday);
+      const wd = load('week_data_' + wk, {});
+      if (!wd['day'+di]) wd['day'+di] = {checks:[false,false,false], highlight:''};
+      wd['day'+di].highlight = inp.value;
+      save('week_data_' + wk, wd);
+    });
+  });
+}
+
+function renderDayPlan() {
+  const now = new Date();
+  now.setDate(now.getDate() + currentDayOffset);
+  const dk = (now.getMonth()+1) + '月' + now.getDate() + '日';
+  const days = ['日','一','二','三','四','五','六'];
+  $('#dayLabel').textContent = dk + ' 星期' + days[now.getDay()];
+  const tk = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+
+  // Weather
+  const weathers = ['☀️','⛅','🌧️','❄️'];
+  const selWeather = load('day_weather_' + tk, null);
+  $('#weatherRow').innerHTML = weathers.map(w =>
+    `<div class="weather-btn${w===selWeather?' selected':''}" data-weather="${w}">${w}</div>`
+  ).join('');
+
+  // Time axis
+  let timeHtml = '';
+  for (let h = 6; h <= 23; h++) {
+    const hl = String(h).padStart(2,'0') + ':00';
+    const sel = load('day_timeslot_' + tk, null);
+    timeHtml += `<div class="time-slot${sel===hl?' selected':''}" data-timeslot="${hl}">
+      <span class="time-label">${hl}</span><span style="font-size:12px;color:var(--text-light);">${sel===hl?'📍 已选':''}</span>
+    </div>`;
+  }
+  $('#timeAxis').innerHTML = timeHtml;
+
+  // Todos
+  const dayTodos = load('day_todos_' + tk, Array(6).fill({text:'',done:false}));
+  $('#dayTodos').innerHTML = dayTodos.map((t,i) =>
+    `<div class="check-row">
+      <div class="check-circle${t.done?' done':''}" data-dtodo="${i}">${t.done?'✓':''}</div>
+      <input type="text" value="${t.text||''}" placeholder="待办 ${i+1}" data-dtodo-text="${i}">
+    </div>`
+  ).join('');
+
+  // Mood
+  const moods = ['😄','😊','😐','😔','😢'];
+  const selDM = load('day_mood_' + tk, null);
+  $('#dayMood').innerHTML = moods.map(m =>
+    `<div class="emoji-btn${m===selDM?' selected':''}" data-dmood="${m}">${m}</div>`
+  ).join('');
+
+  // Data-key inputs
+  $$('#sub-plan-day [data-key]').forEach(el => {
+    el.value = load(el.dataset.key + '_' + tk, '');
+  });
+
+  attachDayEvents(tk);
+}
+
+function attachDayEvents(tk) {
+  $$('#weatherRow .weather-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      save('day_weather_' + tk, btn.dataset.weather);
+      renderDayPlan();
+    });
+  });
+  $$('#timeAxis .time-slot').forEach(slot => {
+    slot.addEventListener('click', () => {
+      const cur = load('day_timeslot_' + tk, null);
+      save('day_timeslot_' + tk, cur === slot.dataset.timeslot ? null : slot.dataset.timeslot);
+      renderDayPlan();
+    });
+  });
+  $$('#dayTodos .check-circle').forEach(c => {
+    c.addEventListener('click', () => {
+      const i = parseInt(c.dataset.dtodo);
+      const todos = load('day_todos_' + tk, Array(6).fill({text:'',done:false}));
+      todos[i] = todos[i] || {text:'',done:false};
+      todos[i].done = !todos[i].done;
+      save('day_todos_' + tk, todos);
+      renderDayPlan();
+    });
+  });
+  $$('#dayTodos input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const i = parseInt(inp.dataset.dtodoText);
+      const todos = load('day_todos_' + tk, Array(6).fill({text:'',done:false}));
+      todos[i] = todos[i] || {text:'',done:false};
+      todos[i].text = inp.value;
+      save('day_todos_' + tk, todos);
+    });
+  });
+  $$('#dayMood .emoji-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      save('day_mood_' + tk, btn.dataset.dmood);
+      renderDayPlan();
+    });
+  });
+  $$('#sub-plan-day [data-key]').forEach(el => {
+    el.addEventListener('input', () => {
+      save(el.dataset.key + '_' + tk, el.value);
+    });
+  });
+}
+
+// ==================== HABITS ====================
+function renderHabits() {
+  const habitNames = load('habit_names', ['早起','阅读','运动','冥想','喝水','学习']);
+  const tk = todayKey();
+  const habitData = load('habit_data_' + tk, {});
+
+  // Day labels
+  const now = new Date();
+  let dayLabelHtml = '';
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - 29 + i);
+    const isToday = i === 29;
+    dayLabelHtml += `<span style="width:28px;text-align:center;flex-shrink:0;font-size:10px;${isToday?'font-weight:700;color:var(--primary);':''}">${d.getDate()}</span>`;
+  }
+  $('#habitDayLabels').innerHTML = dayLabelHtml;
+
+  // Habit rows
+  let rowsHtml = '';
+  habitNames.forEach((name, hi) => {
+    rowsHtml += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+      <input type="text" value="${name}" style="min-width:60px;width:70px;flex-shrink:0;font-size:12px;padding:4px 6px;" data-hname="${hi}">
+      <div class="habit-grid" style="flex:1;">`;
+    for (let d = 0; d < 30; d++) {
+      const dd = new Date(now);
+      dd.setDate(dd.getDate() - 29 + d);
+      const dk = dd.getFullYear() + '-' + String(dd.getMonth()+1).padStart(2,'0') + '-' + String(dd.getDate()).padStart(2,'0');
+      const hd = load('habit_data_' + dk, {});
+      const state = hd[hi] || '';
+      const cls = state === 'done' ? 'done' : state === 'missed' ? 'missed' : '';
+      const sym = state === 'done' ? '✓' : state === 'missed' ? '✗' : '';
+      rowsHtml += `<div class="habit-dot ${cls}" data-hi="${hi}" data-dk="${dk}">${sym}</div>`;
+    }
+    rowsHtml += `</div></div>`;
+  });
+  $('#habitRows').innerHTML = rowsHtml;
+
+  // Attach events
+  $$('#habitRows .habit-dot').forEach(dot => {
+    dot.addEventListener('click', () => {
+      const hi = parseInt(dot.dataset.hi);
+      const dk = dot.dataset.dk;
+      const hd = load('habit_data_' + dk, {});
+      const cur = hd[hi] || '';
+      const next = cur === '' ? 'done' : cur === 'done' ? 'missed' : '';
+      if (next === '') delete hd[hi];
+      else hd[hi] = next;
+      save('habit_data_' + dk, hd);
+      renderHabits();
+    });
+  });
+  $$('#habitRows input[data-hname]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const hi = parseInt(inp.dataset.hname);
+      const names = load('habit_names', ['早起','阅读','运动','冥想','喝水','学习']);
+      names[hi] = inp.value;
+      save('habit_names', names);
+    });
+  });
+
+  // Progress
+  let totalDone = 0;
+  const totalPossible = habitNames.length * 30;
+  for (let d = 0; d < 30; d++) {
+    const dd = new Date(now);
+    dd.setDate(dd.getDate() - 29 + d);
+    const dk = dd.getFullYear() + '-' + String(dd.getMonth()+1).padStart(2,'0') + '-' + String(dd.getDate()).padStart(2,'0');
+    const hd = load('habit_data_' + dk, {});
+    habitNames.forEach((_, hi) => { if (hd[hi] === 'done') totalDone++; });
+  }
+  const pct = totalPossible > 0 ? Math.round(totalDone / totalPossible * 100) : 0;
+  $('#habitProgressBar').style.width = pct + '%';
+  $('#habitProgressText').textContent = '完成 ' + totalDone + ' / ' + totalPossible;
+}
+
+// ==================== MOOD ====================
+function renderMoodPage() {
+  if (currentMoodSub === 'mood-emotion') renderEmotion();
+  else renderGratitude();
+}
+
+function renderEmotion() {
+  const tk = todayKey();
+  selectedEmotionColor = load('emotion_color_' + tk, null);
+  const colors = [
+    {color:'#F4A5B0', label:'粉红·柔软'},
+    {color:'#F4C78A', label:'橙色·温暖'},
+    {color:'#F4E08A', label:'黄色·明亮'},
+    {color:'#A8D5BA', label:'绿色·平静'},
+    {color:'#A0C4F0', label:'蓝色·沉静'},
+    {color:'#D4C5F9', label:'紫色·梦幻'},
+    {color:'#C0B8A8', label:'灰色·低落'},
+  ];
+  $('#emotionColors').innerHTML = colors.map((c,i) =>
+    `<div class="color-circle${selectedEmotionColor===c.color?' selected':''}" style="background:${c.color};" data-ecolor="${c.color}" title="${c.label}"></div>`
+  ).join('');
+
+  $$('#emotionColors .color-circle').forEach(c => {
+    c.addEventListener('click', () => {
+      selectedEmotionColor = c.dataset.ecolor;
+      save('emotion_color_' + tk, selectedEmotionColor);
+      renderEmotion();
+    });
+  });
+
+  const thermoVal = load('emotion_thermometer_' + tk, 0);
+  $('#emotionThermometer').value = thermoVal;
+  updateThermoLabel(thermoVal);
+
+  // Load emotion reason
+  const erEl = document.querySelector('#sub-mood-emotion textarea[data-key="emotion_reason"]');
+  if (erEl) erEl.value = load('emotion_reason_' + tk, '');
+
+  // History
+  let histHtml = '';
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dk = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    const ec = load('emotion_color_' + dk, null);
+    const er = load('emotion_reason_' + dk, '');
+    const et = load('emotion_thermometer_' + dk, null);
+    const dateStr = (d.getMonth()+1) + '/' + d.getDate();
+    histHtml += `<div class="history-item">
+      <strong>${dateStr}</strong>
+      ${ec ? `<span style="display:inline-block;width:14px;height:14px;border-radius:50%;background:${ec};vertical-align:middle;margin:0 4px;"></span>` : '—'}
+      ${et !== null ? '🌡️'+et : ''}
+      ${er ? '<br><span style="font-size:11px;color:var(--text-light);">'+er+'</span>' : ''}
+    </div>`;
+  }
+  $('#emotionHistory').innerHTML = histHtml;
+}
+
+$('#emotionThermometer').addEventListener('input', function() {
+  updateThermoLabel(parseInt(this.value));
+  save('emotion_thermometer_' + todayKey(), parseInt(this.value));
+});
+
+function updateThermoLabel(val) {
+  const labels = {'-5':'非常低落 😢','-4':'很低落','-3':'有点难过','-2':'不太开心','-1':'略微低落','0':'中性 😐','1':'还行','2':'不错 🙂','3':'挺好的 😊','4':'很开心 😄','5':'超级开心 🥳'};
+  $('#emotionThermoLabel').textContent = labels[String(val)] || '';
+}
+
+function renderGratitude() {
+  const tk = todayKey();
+  const now = new Date();
+  $('#gratitudeDate').textContent = now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日';
+  $$('#sub-mood-gratitude [data-key]').forEach(el => {
+    el.value = load(el.dataset.key + '_' + tk, '');
+  });
+  let histHtml = '';
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dk = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    const g1 = load('gratitude1_' + dk, '');
+    const g2 = load('gratitude2_' + dk, '');
+    const g3 = load('gratitude3_' + dk, '');
+    const lj = load('gratitude_littleJoy_' + dk, '');
+    const dateStr = (d.getMonth()+1) + '/' + d.getDate();
+    const hasData = g1 || g2 || g3 || lj;
+    histHtml += `<div class="history-item">
+      <strong>${dateStr}</strong>
+      ${hasData ? '<br>' : ''}${g1 ? '🙏 '+g1+'<br>' : ''}${g2 ? '🙏 '+g2+'<br>' : ''}${g3 ? '🙏 '+g3+'<br>' : ''}${lj ? '🍀 '+lj : ''}
+      ${!hasData ? ' 暂无记录' : ''}
+    </div>`;
+  }
+  $('#gratitudeHistory').innerHTML = histHtml;
+}
+
+$('#saveGratitude').addEventListener('click', () => {
+  const tk = todayKey();
+  $$('#sub-mood-gratitude [data-key]').forEach(el => {
+    save(el.dataset.key + '_' + tk, el.value);
+  });
+  renderGratitude();
+  const btn = $('#saveGratitude');
+  btn.textContent = '✅ 已保存！';
+  setTimeout(() => { btn.textContent = '💾 保存感恩日记'; }, 1500);
+});
+
+// Auto-save mood inputs
+$$('#sub-mood-emotion textarea[data-key]').forEach(el => {
+  el.addEventListener('input', () => save(el.dataset.key + '_' + todayKey(), el.value));
+});
+$$('#sub-mood-gratitude [data-key]').forEach(el => {
+  el.addEventListener('input', () => save(el.dataset.key + '_' + todayKey(), el.value));
+});
+
+// ==================== MORE ====================
+function renderMorePage() {
+  if (currentMoreSub === 'more-project') renderProjects();
+  else renderNotes();
+}
+
+function renderProjects() {
+  const projects = load('projects', [
+    {name:'', goal:'', progress:0, milestones:['','','',''], status:'ongoing', review:''},
+    {name:'', goal:'', progress:0, milestones:['','','',''], status:'ongoing', review:''},
+    {name:'', goal:'', progress:0, milestones:['','','',''], status:'ongoing', review:''},
+  ]);
+  let html = '';
+  projects.forEach((p, pi) => {
+    const statusLabels = {ongoing:'进行中', 'done-tag':'已完成', paused:'暂停'};
+    const statusClass = p.status === 'done-tag' ? 'done-tag' : p.status;
+    html += `<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <input type="text" value="${p.name}" placeholder="项目名称" style="flex:1;font-weight:700;" data-pname="${pi}">
+        <span class="status-badge ${statusClass}" data-pstatus="${pi}">${statusLabels[p.status]||'进行中'}</span>
+      </div>
+      <textarea placeholder="目标描述…" data-pgoal="${pi}" style="min-height:40px;margin-bottom:6px;">${p.goal}</textarea>
+      <div style="font-size:12px;color:var(--text-light);margin-bottom:2px;">进度：${p.progress}%</div>
+      <div class="progress-bar" style="margin-bottom:4px;"><div class="progress-fill" style="width:${p.progress}%;"></div></div>
+      <input type="range" min="0" max="100" value="${p.progress}" data-pprogress="${pi}" style="margin-bottom:8px;">
+      <div style="font-size:12px;color:var(--text-light);margin-bottom:4px;">里程碑</div>
+      ${p.milestones.map((m,mi) =>
+        `<input type="text" value="${m}" placeholder="里程碑 ${mi+1}" style="margin-bottom:4px;" data-pmile="${pi}" data-pmileidx="${mi}">`
+      ).join('')}
+      <textarea placeholder="项目复盘…" data-prevew="${pi}" style="min-height:40px;margin-top:6px;">${p.review}</textarea>
+    </div>`;
+  });
+  $('#projectCards').innerHTML = html;
+  attachProjectEvents();
+}
+
+function attachProjectEvents() {
+  $$('#projectCards [data-pname]').forEach(el => {
+    el.addEventListener('input', () => updateProject(parseInt(el.dataset.pname), 'name', el.value));
+  });
+  $$('#projectCards [data-pgoal]').forEach(el => {
+    el.addEventListener('input', () => updateProject(parseInt(el.dataset.pgoal), 'goal', el.value));
+  });
+  $$('#projectCards [data-pprogress]').forEach(el => {
+    el.addEventListener('input', () => {
+      updateProject(parseInt(el.dataset.pprogress), 'progress', parseInt(el.value));
+      renderProjects();
+    });
+  });
+  $$('#projectCards [data-pmile]').forEach(el => {
+    el.addEventListener('input', () => {
+      const pi = parseInt(el.dataset.pmile);
+      const mi = parseInt(el.dataset.pmileidx);
+      const projects = load('projects', []);
+      if (projects[pi]) {
+        projects[pi].milestones[mi] = el.value;
+        save('projects', projects);
+      }
+    });
+  });
+  $$('#projectCards [data-prevew]').forEach(el => {
+    el.addEventListener('input', () => updateProject(parseInt(el.dataset.prevew), 'review', el.value));
+  });
+  $$('#projectCards .status-badge').forEach(badge => {
+    badge.addEventListener('click', () => {
+      const pi = parseInt(badge.dataset.pstatus);
+      const projects = load('projects', []);
+      if (projects[pi]) {
+        const order = ['ongoing','done-tag','paused'];
+        const idx = order.indexOf(projects[pi].status);
+        projects[pi].status = order[(idx + 1) % 3];
+        save('projects', projects);
+        renderProjects();
+      }
+    });
+  });
+}
+
+function updateProject(pi, key, value) {
+  const projects = load('projects', [
+    {name:'', goal:'', progress:0, milestones:['','','',''], status:'ongoing', review:''},
+    {name:'', goal:'', progress:0, milestones:['','','',''], status:'ongoing', review:''},
+    {name:'', goal:'', progress:0, milestones:['','','',''], status:'ongoing', review:''},
+  ]);
+  if (projects[pi]) projects[pi][key] = value;
+  save('projects', projects);
+}
+
+function renderNotes() {
+  const tk = todayKey();
+  $$('#sub-more-note [data-key]').forEach(el => {
+    el.value = load(el.dataset.key + '_note_' + tk, '');
+  });
+  const notes = load('notes_list', []);
+  let histHtml = '';
+  notes.slice().reverse().slice(0, 10).forEach((n, i) => {
+    histHtml += `<div class="history-item">
+      <strong>${n.date}</strong> ${n.tag ? '🏷️'+n.tag : ''}<br>
+      <span style="font-size:12px;color:var(--text-light);">${(n.content||'').substring(0,80)}${n.content&&n.content.length>80?'…':''}</span>
+    </div>`;
+  });
+  if (!histHtml) histHtml = '<div style="font-size:13px;color:var(--text-light);text-align:center;padding:16px;">还没有笔记，开始写吧 ✍️</div>';
+  $('#notesHistory').innerHTML = histHtml;
+}
+
+$('#saveNote').addEventListener('click', () => {
+  const tk = todayKey();
+  const tag = load('note_tag_note_' + tk, '');
+  const content = load('note_content_note_' + tk, '');
+  if (!content.trim()) { alert('请先写点什么吧～'); return; }
+  const notes = load('notes_list', []);
+  notes.push({
+    date: new Date().toLocaleDateString('zh-CN'),
+    tag, content
+  });
+  save('notes_list', notes);
+  save('note_tag_note_' + tk, '');
+  save('note_content_note_' + tk, '');
+  renderNotes();
+  const btn = $('#saveNote');
+  btn.textContent = '✅ 已保存！';
+  setTimeout(() => { btn.textContent = '💾 保存笔记'; }, 1500);
+});
+
+$$('#sub-more-note [data-key]').forEach(el => {
+  el.addEventListener('input', () => save(el.dataset.key + '_note_' + todayKey(), el.value));
+});
+
+// ==================== GLOBAL AUTO-SAVE ====================
+function initAutoSave() {
+  document.addEventListener('input', (e) => {
+    const el = e.target;
+    if (el.dataset.key && !el.closest('#sub-plan-day') && !el.closest('#sub-mood-emotion') && !el.closest('#sub-mood-gratitude') && !el.closest('#sub-more-note')) {
+      save(el.dataset.key, el.value);
+    }
+  });
+}
+
+// ==================== WELCOME ====================
+function checkWelcome() {
+  const visited = load('visited', false);
+  if (!visited) {
+    $('#welcomeOverlay').style.display = 'flex';
+  }
+}
+$('#welcomeClose').addEventListener('click', () => {
+  $('#welcomeOverlay').style.display = 'none';
+  save('visited', true);
+});
+
+// ==================== INIT ====================
+function init() {
+  initAutoSave();
+  checkWelcome();
+  renderHome();
+
+  // Load saved data-key inputs
+  $$('[data-key]').forEach(el => {
+    if (!el.closest('#sub-plan-day') && !el.closest('#sub-mood-emotion') && !el.closest('#sub-mood-gratitude') && !el.closest('#sub-more-note')) {
+      el.value = load(el.dataset.key, '');
+    }
+  });
+}
+
+init();
+</script>
+</body>
+</html>
