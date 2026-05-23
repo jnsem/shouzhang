@@ -513,6 +513,7 @@ input[type="range"]::-webkit-slider-thumb {
         <div style="margin-top:8px;font-size:22px;">🌸 ✨ 🌿</div>
       </div>
       <div style="text-align:center;padding:8px;font-size:11px;color:var(--text-light);">💛 每一天，都值得被温柔对待</div>
+      <div style="text-align:center;padding:4px;font-size:10px;color:#ccc;" id="storageStatus"></div>
     </div>
 
     <!-- ==================== PLAN PAGE ==================== -->
@@ -818,24 +819,36 @@ function openDB() {
 // Load all data from IndexedDB into memory
 async function initDB() {
   try {
+    // Quick test: is IndexedDB available?
+    if (!window.indexedDB) throw new Error('No IndexedDB');
     const db = await openDB();
     const tx = db.transaction(DB_STORE, 'readonly');
     const store = tx.objectStore(DB_STORE);
     const req = store.getAllKeys();
-    const keys = await new Promise((resolve) => { req.onsuccess = () => resolve(req.result); });
+    const keys = await new Promise((resolve, reject) => {
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
     for (const key of keys) {
       const vreq = store.get(key);
-      const val = await new Promise((r) => { vreq.onsuccess = () => r(vreq.result); });
+      const val = await new Promise((r, x) => { vreq.onsuccess = () => r(vreq.result); vreq.onerror = () => x(vreq.error); });
       memStore.set(key, val);
     }
     db.close();
     dbReady = true;
     return true;
   } catch(e) {
-    // Fallback: try localStorage
-    console.warn('IndexedDB init failed, using localStorage fallback');
+    // Silent fallback: load from localStorage into memStore
+    console.warn('IndexedDB unavailable, using localStorage');
     dbReady = false;
-    return false;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(PREFIX)) {
+        try { memStore.set(key, JSON.parse(localStorage.getItem(key))); }
+        catch { memStore.set(key, localStorage.getItem(key)); }
+      }
+    }
+    return true; // success, just without IndexedDB
   }
 }
 
@@ -986,6 +999,10 @@ function renderHome() {
   let doneCount = 0;
   habitNames.forEach((_, i) => { if (habitData[i] === 'done') doneCount++; });
   $('#overviewHabits').textContent = doneCount + '/' + habitNames.length;
+  
+  // Storage status indicator
+  const ts = getLastModified();
+  $('#storageStatus').textContent = ts === '暂无记录' ? '💾 数据自动保存中' : '💾 已保存 · ' + ts;
 }
 
 // ==================== PLAN PAGES ====================
@@ -1042,7 +1059,7 @@ function renderMonthPlan() {
     </div>`
   ).join('');
   // Important items
-  const imp = load('month_imp_' + mk, Array.from({length:5},()=>({date:'',content:''}));
+  const imp = load('month_imp_' + mk, Array.from({length:5},()=>({date:'',content:''})));
   $('#monthImportant').innerHTML = imp.map((it,i) =>
     `<div style="display:flex;gap:6px;margin-bottom:4px;align-items:center;">
       <input type="text" value="${it.date||''}" placeholder="日期" style="width:80px;flex-shrink:0;" data-mimp-date="${i}">
@@ -1087,7 +1104,7 @@ function attachMonthEvents(mk) {
   });
   $$('#monthImportant input').forEach(inp => {
     inp.addEventListener('input', () => {
-      const imp = load('month_imp_' + mk, Array.from({length:5},()=>({date:'',content:''}));
+      const imp = load('month_imp_' + mk, Array.from({length:5},()=>({date:'',content:''})));
       if (inp.dataset.mimpDate !== undefined) imp[parseInt(inp.dataset.mimpDate)].date = inp.value;
       if (inp.dataset.mimpContent !== undefined) imp[parseInt(inp.dataset.mimpContent)].content = inp.value;
       save('month_imp_' + mk, imp);
@@ -1096,7 +1113,7 @@ function attachMonthEvents(mk) {
   $$('#monthHabits .check-circle').forEach(c => {
     c.addEventListener('click', () => {
       const i = parseInt(c.dataset.mhabit);
-      const mh = load('month_habits_' + mk, Array.from({length:7},()=>({text:'',done:false}));
+      const mh = load('month_habits_' + mk, Array.from({length:7},()=>({text:'',done:false})));
       mh[i] = mh[i] || {text:'',done:false};
       mh[i].done = !mh[i].done;
       save('month_habits_' + mk, mh);
@@ -1106,7 +1123,7 @@ function attachMonthEvents(mk) {
   $$('#monthHabits input').forEach(inp => {
     inp.addEventListener('input', () => {
       const i = parseInt(inp.dataset.mhabitText);
-      const mh = load('month_habits_' + mk, Array.from({length:7},()=>({text:'',done:false}));
+      const mh = load('month_habits_' + mk, Array.from({length:7},()=>({text:'',done:false})));
       mh[i] = mh[i] || {text:'',done:false};
       mh[i].text = inp.value;
       save('month_habits_' + mk, mh);
@@ -1221,7 +1238,7 @@ function renderDayPlan() {
   $('#timeAxis').innerHTML = timeHtml;
 
   // Todos
-  const dayTodos = load('day_todos_' + tk, Array.from({length:6},()=>({text:'',done:false}));
+  const dayTodos = load('day_todos_' + tk, Array.from({length:6},()=>({text:'',done:false})));
   $('#dayTodos').innerHTML = dayTodos.map((t,i) =>
     `<div class="check-row">
       <div class="check-circle${t.done?' done':''}" data-dtodo="${i}">${t.done?'✓':''}</div>
@@ -1261,7 +1278,7 @@ function attachDayEvents(tk) {
   $$('#dayTodos .check-circle').forEach(c => {
     c.addEventListener('click', () => {
       const i = parseInt(c.dataset.dtodo);
-      const todos = load('day_todos_' + tk, Array.from({length:6},()=>({text:'',done:false}));
+      const todos = load('day_todos_' + tk, Array.from({length:6},()=>({text:'',done:false})));
       todos[i] = todos[i] || {text:'',done:false};
       todos[i].done = !todos[i].done;
       save('day_todos_' + tk, todos);
@@ -1271,7 +1288,7 @@ function attachDayEvents(tk) {
   $$('#dayTodos input').forEach(inp => {
     inp.addEventListener('input', () => {
       const i = parseInt(inp.dataset.dtodoText);
-      const todos = load('day_todos_' + tk, Array.from({length:6},()=>({text:'',done:false}));
+      const todos = load('day_todos_' + tk, Array.from({length:6},()=>({text:'',done:false})));
       todos[i] = todos[i] || {text:'',done:false};
       todos[i].text = inp.value;
       save('day_todos_' + tk, todos);
@@ -1718,27 +1735,33 @@ $('#welcomeClose').addEventListener('click', () => {
 
 // ==================== INIT ====================
 async function init() {
-  // Init IndexedDB first
-  await initDB();
-  
-  // Request persistent storage (data survives browser cleanup)
-  if (navigator.storage && navigator.storage.persist) {
-    try {
-      const persisted = await navigator.storage.persist();
-      if (!persisted) console.log('Storage not persisted, data may be evicted');
-    } catch {}
+  try {
+    await initDB();
+  } catch(e) {
+    console.warn('initDB error, continuing with empty storage');
+    dbReady = false;
   }
   
-  initAutoSave();
-  checkWelcome();
-  renderHome();
+  // Request persistent storage
+  if (navigator.storage && navigator.storage.persist) {
+    try { await navigator.storage.persist(); } catch {}
+  }
+  
+  try {
+    initAutoSave();
+    checkWelcome();
+    renderHome();
 
-  // Load saved data-key inputs
-  $$('[data-key]').forEach(el => {
-    if (!el.closest('#sub-plan-day') && !el.closest('#sub-mood-emotion') && !el.closest('#sub-mood-gratitude') && !el.closest('#sub-more-note')) {
-      el.value = load(el.dataset.key, '');
-    }
-  });
+    $$('[data-key]').forEach(el => {
+      if (!el.closest('#sub-plan-day') && !el.closest('#sub-mood-emotion') && !el.closest('#sub-mood-gratitude') && !el.closest('#sub-more-note')) {
+        el.value = load(el.dataset.key, '');
+      }
+    });
+  } catch(e) {
+    console.error('Init error:', e);
+    // If everything fails, at least show the welcome screen
+    try { $('#welcomeOverlay').style.display = 'flex'; } catch {}
+  }
 }
 
 init();
