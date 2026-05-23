@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>治愈系全能规划手帐</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#FAF3E0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="规划手帐">
 <style>
 :root {
   --bg: #FAF3E0;
@@ -722,6 +726,7 @@ input[type="range"]::-webkit-slider-thumb {
       <div class="sub-tabs" id="moreSubTabs">
         <div class="sub-tab active" data-sub="more-project">📊 项目追踪</div>
         <div class="sub-tab" data-sub="more-note">📝 自由笔记</div>
+        <div class="sub-tab" data-sub="more-backup">💾 数据管理</div>
       </div>
 
       <!-- Project -->
@@ -741,6 +746,20 @@ input[type="range"]::-webkit-slider-thumb {
         <div class="card">
           <div class="card-title">📚 历史笔记</div>
           <div id="notesHistory"></div>
+        </div>
+      </div>
+
+      <!-- Backup -->
+      <div class="sub-page" id="sub-more-backup" style="display:none;">
+        <div class="card" style="text-align:center;">
+          <div style="font-size:36px;margin-bottom:8px;">💾</div>
+          <div class="card-title">数据管理</div>
+          <p style="font-size:12px;color:var(--text-light);margin-bottom:16px;">你的手帐数据都存在手机浏览器里<br>换手机或清缓存会丢失，记得定期备份</p>
+          <div id="backupTime" style="font-size:11px;color:var(--highlight);margin-bottom:14px;"></div>
+          <button class="btn" id="exportBtn" style="width:100%;background:var(--secondary);margin-bottom:10px;">📤 导出备份文件</button>
+          <button class="btn" id="importBtn" style="width:100%;background:var(--accent);color:#5D5C61;">📥 从备份文件恢复</button>
+          <input type="file" id="importFile" accept=".json" style="display:none;">
+          <p style="font-size:10px;color:var(--text-light);margin-top:10px;">备份文件为 .json 格式<br>建议每月导出一次，存到微信收藏或云盘</p>
         </div>
       </div>
     </div>
@@ -771,22 +790,82 @@ input[type="range"]::-webkit-slider-thumb {
   <div class="welcome-card">
     <div style="font-size:48px;margin-bottom:8px;">📔✨</div>
     <h3>欢迎来到你的规划手帐</h3>
-    <p>这是一本会一直陪着你的电子手帐～<br>记录计划、追踪习惯、安放心情。<br><br><strong>你的每一次记录都会被自动保存 💛</strong></p>
+    <p>这是一本会一直陪着你的电子手帐～<br>记录计划、追踪习惯、安放心情。<br><br><strong>数据永久保存，关掉浏览器也不会丢 💛</strong></p>
     <button class="btn" id="welcomeClose" style="width:100%;">开始使用 🌸</button>
   </div>
 </div>
 
 <script>
-// ==================== DATA MANAGER ====================
+// ==================== DATA MANAGER (IndexedDB) ====================
 const PREFIX = 'journal_';
+const DB_NAME = 'journal_db';
+const DB_STORE = 'journal_store';
+let dbReady = false;
+const memStore = new Map(); // in-memory sync cache
+
 function gk(key) { return PREFIX + key; }
-function load(key, def) {
-  try { const v = localStorage.getItem(gk(key)); return v !== null ? JSON.parse(v) : def; }
-  catch { return def; }
+
+// Open IndexedDB
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = (e) => { e.target.result.createObjectStore(DB_STORE); };
+    req.onsuccess = (e) => { resolve(e.target.result); };
+    req.onerror = () => { reject(req.error); };
+  });
 }
+
+// Load all data from IndexedDB into memory
+async function initDB() {
+  try {
+    const db = await openDB();
+    const tx = db.transaction(DB_STORE, 'readonly');
+    const store = tx.objectStore(DB_STORE);
+    const req = store.getAllKeys();
+    const keys = await new Promise((resolve) => { req.onsuccess = () => resolve(req.result); });
+    for (const key of keys) {
+      const vreq = store.get(key);
+      const val = await new Promise((r) => { vreq.onsuccess = () => r(vreq.result); });
+      memStore.set(key, val);
+    }
+    db.close();
+    dbReady = true;
+    return true;
+  } catch(e) {
+    // Fallback: try localStorage
+    console.warn('IndexedDB init failed, using localStorage fallback');
+    dbReady = false;
+    return false;
+  }
+}
+
 function save(key, val) {
-  try { localStorage.setItem(gk(key), JSON.stringify(val)); }
-  catch(e) { console.warn('Storage full', e); }
+  memStore.set(gk(key), val);
+  saveLastBackupTime();
+  if (dbReady) {
+    (async () => {
+      try {
+        const db = await openDB();
+        const tx = db.transaction(DB_STORE, 'readwrite');
+        tx.objectStore(DB_STORE).put(val, gk(key));
+        db.close();
+      } catch {}
+    })();
+  } else {
+    // localStorage fallback
+    try { localStorage.setItem(gk(key), JSON.stringify(val)); } catch {}
+  }
+}
+
+function load(key, def) {
+  const v = memStore.get(gk(key));
+  if (v !== undefined) return v;
+  if (!dbReady) {
+    // localStorage fallback
+    try { const lv = localStorage.getItem(gk(key)); return lv !== null ? JSON.parse(lv) : def; }
+    catch { return def; }
+  }
+  return def;
 }
 
 function todayKey() {
@@ -870,6 +949,7 @@ $('#moreSubTabs').addEventListener('click', (e) => {
   if (subEl) subEl.style.display = 'block';
   if (currentMoreSub === 'more-project') renderProjects();
   if (currentMoreSub === 'more-note') renderNotes();
+  if (currentMoreSub === 'more-backup') renderBackupPage();
 });
 
 // ==================== HOME PAGE ====================
@@ -1405,6 +1485,7 @@ $$('#sub-mood-gratitude [data-key]').forEach(el => {
 // ==================== MORE ====================
 function renderMorePage() {
   if (currentMoreSub === 'more-project') renderProjects();
+  else if (currentMoreSub === 'more-backup') renderBackupPage();
   else renderNotes();
 }
 
@@ -1540,6 +1621,86 @@ function initAutoSave() {
   });
 }
 
+// ==================== BACKUP / EXPORT / IMPORT ====================
+function saveLastBackupTime() {
+  memStore.set(gk('last_modified'), Date.now());
+}
+
+function getLastModified() {
+  const ts = memStore.get(gk('last_modified')) || 0;
+  if (!ts) return '暂无记录';
+  const d = new Date(ts);
+  return d.getFullYear() + '/' + (d.getMonth()+1) + '/' + d.getDate() + ' ' +
+    String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+async function exportAll() {
+  // Also sync from localStorage fallback if needed
+  const data = {};
+  if (!dbReady) {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key.startsWith(PREFIX)) {
+        try { data[key.replace(PREFIX, '')] = JSON.parse(localStorage.getItem(key)); }
+        catch { data[key.replace(PREFIX, '')] = localStorage.getItem(key); }
+      }
+    }
+  }
+  // Merge memStore data
+  for (const [key, val] of memStore) {
+    if (key.startsWith(PREFIX)) {
+      data[key.replace(PREFIX, '')] = val;
+    }
+  }
+  const blob = new Blob([JSON.stringify({ version:1, exported:Date.now(), data })], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '手帐备份_' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  alert('✅ 备份文件已下载！\n\n请存到微信收藏或云盘。\n需要恢复时点"从备份文件恢复"。');
+}
+
+async function importAll(file) {
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      const json = JSON.parse(e.target.result);
+      if (!json.data) { alert('❌ 无效的备份文件'); return; }
+      for (const [key, val] of Object.entries(json.data)) {
+        memStore.set(gk(key), val);
+        if (dbReady) {
+          try {
+            const db = await openDB();
+            const tx = db.transaction(DB_STORE, 'readwrite');
+            tx.objectStore(DB_STORE).put(val, gk(key));
+            db.close();
+          } catch {}
+        } else {
+          try { localStorage.setItem(gk(key), typeof val === 'string' ? val : JSON.stringify(val)); } catch {}
+        }
+      }
+      alert('✅ 数据已恢复！页面即将刷新。');
+      location.reload();
+    } catch(ex) { alert('❌ 文件解析失败'); }
+  };
+  reader.readAsText(file);
+}
+
+function renderBackupPage() {
+  const tEl = document.getElementById('backupTime');
+  if (tEl) tEl.textContent = '📅 最近修改：' + getLastModified();
+}
+
+// Export button
+document.getElementById('exportBtn').addEventListener('click', exportAll);
+// Import button
+document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
+document.getElementById('importFile').addEventListener('change', (e) => {
+  if (e.target.files[0]) importAll(e.target.files[0]);
+});
+
 // ==================== WELCOME ====================
 function checkWelcome() {
   const visited = load('visited', false);
@@ -1553,7 +1714,18 @@ $('#welcomeClose').addEventListener('click', () => {
 });
 
 // ==================== INIT ====================
-function init() {
+async function init() {
+  // Init IndexedDB first
+  await initDB();
+  
+  // Request persistent storage (data survives browser cleanup)
+  if (navigator.storage && navigator.storage.persist) {
+    try {
+      const persisted = await navigator.storage.persist();
+      if (!persisted) console.log('Storage not persisted, data may be evicted');
+    } catch {}
+  }
+  
   initAutoSave();
   checkWelcome();
   renderHome();

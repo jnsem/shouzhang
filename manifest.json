@@ -1,0 +1,9 @@
+{
+  "name": "治愈系全能规划手帐",
+  "short_name": "规划手帐",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#FAF3E0",
+  "theme_color": "#E8A87C",
+  "icons": []
+}
