@@ -842,6 +842,8 @@ async function initDB() {
 function save(key, val) {
   memStore.set(gk(key), val);
   saveLastBackupTime();
+  // Sync localStorage backup (always completes, even if page killed)
+  try { localStorage.setItem(gk(key), JSON.stringify(val)); } catch {}
   if (dbReady) {
     (async () => {
       try {
@@ -851,20 +853,15 @@ function save(key, val) {
         db.close();
       } catch {}
     })();
-  } else {
-    // localStorage fallback
-    try { localStorage.setItem(gk(key), JSON.stringify(val)); } catch {}
   }
 }
 
 function load(key, def) {
   const v = memStore.get(gk(key));
   if (v !== undefined) return v;
-  if (!dbReady) {
-    // localStorage fallback
-    try { const lv = localStorage.getItem(gk(key)); return lv !== null ? JSON.parse(lv) : def; }
-    catch { return def; }
-  }
+  // Fallback: try localStorage (sync, always works)
+  try { const lv = localStorage.getItem(gk(key)); if (lv !== null) { const p = JSON.parse(lv); memStore.set(gk(key), p); return p; } }
+  catch {}
   return def;
 }
 
@@ -1045,7 +1042,7 @@ function renderMonthPlan() {
     </div>`
   ).join('');
   // Important items
-  const imp = load('month_imp_' + mk, Array(5).fill({date:'',content:''}));
+  const imp = load('month_imp_' + mk, Array.from({length:5},()=>({date:'',content:''}));
   $('#monthImportant').innerHTML = imp.map((it,i) =>
     `<div style="display:flex;gap:6px;margin-bottom:4px;align-items:center;">
       <input type="text" value="${it.date||''}" placeholder="日期" style="width:80px;flex-shrink:0;" data-mimp-date="${i}">
@@ -1090,7 +1087,7 @@ function attachMonthEvents(mk) {
   });
   $$('#monthImportant input').forEach(inp => {
     inp.addEventListener('input', () => {
-      const imp = load('month_imp_' + mk, Array(5).fill({date:'',content:''}));
+      const imp = load('month_imp_' + mk, Array.from({length:5},()=>({date:'',content:''}));
       if (inp.dataset.mimpDate !== undefined) imp[parseInt(inp.dataset.mimpDate)].date = inp.value;
       if (inp.dataset.mimpContent !== undefined) imp[parseInt(inp.dataset.mimpContent)].content = inp.value;
       save('month_imp_' + mk, imp);
@@ -1099,7 +1096,7 @@ function attachMonthEvents(mk) {
   $$('#monthHabits .check-circle').forEach(c => {
     c.addEventListener('click', () => {
       const i = parseInt(c.dataset.mhabit);
-      const mh = load('month_habits_' + mk, Array(7).fill({text:'',done:false}));
+      const mh = load('month_habits_' + mk, Array.from({length:7},()=>({text:'',done:false}));
       mh[i] = mh[i] || {text:'',done:false};
       mh[i].done = !mh[i].done;
       save('month_habits_' + mk, mh);
@@ -1109,7 +1106,7 @@ function attachMonthEvents(mk) {
   $$('#monthHabits input').forEach(inp => {
     inp.addEventListener('input', () => {
       const i = parseInt(inp.dataset.mhabitText);
-      const mh = load('month_habits_' + mk, Array(7).fill({text:'',done:false}));
+      const mh = load('month_habits_' + mk, Array.from({length:7},()=>({text:'',done:false}));
       mh[i] = mh[i] || {text:'',done:false};
       mh[i].text = inp.value;
       save('month_habits_' + mk, mh);
@@ -1224,7 +1221,7 @@ function renderDayPlan() {
   $('#timeAxis').innerHTML = timeHtml;
 
   // Todos
-  const dayTodos = load('day_todos_' + tk, Array(6).fill({text:'',done:false}));
+  const dayTodos = load('day_todos_' + tk, Array.from({length:6},()=>({text:'',done:false}));
   $('#dayTodos').innerHTML = dayTodos.map((t,i) =>
     `<div class="check-row">
       <div class="check-circle${t.done?' done':''}" data-dtodo="${i}">${t.done?'✓':''}</div>
@@ -1264,7 +1261,7 @@ function attachDayEvents(tk) {
   $$('#dayTodos .check-circle').forEach(c => {
     c.addEventListener('click', () => {
       const i = parseInt(c.dataset.dtodo);
-      const todos = load('day_todos_' + tk, Array(6).fill({text:'',done:false}));
+      const todos = load('day_todos_' + tk, Array.from({length:6},()=>({text:'',done:false}));
       todos[i] = todos[i] || {text:'',done:false};
       todos[i].done = !todos[i].done;
       save('day_todos_' + tk, todos);
@@ -1274,7 +1271,7 @@ function attachDayEvents(tk) {
   $$('#dayTodos input').forEach(inp => {
     inp.addEventListener('input', () => {
       const i = parseInt(inp.dataset.dtodoText);
-      const todos = load('day_todos_' + tk, Array(6).fill({text:'',done:false}));
+      const todos = load('day_todos_' + tk, Array.from({length:6},()=>({text:'',done:false}));
       todos[i] = todos[i] || {text:'',done:false};
       todos[i].text = inp.value;
       save('day_todos_' + tk, todos);
@@ -1704,6 +1701,12 @@ document.getElementById('importFile').addEventListener('change', (e) => {
 // ==================== WELCOME ====================
 function checkWelcome() {
   const visited = load('visited', false);
+  // Also check if there's any data in storage (don't show welcome if data exists)
+  if (!visited && memStore.size > 0) {
+    // Data exists but visited flag missing - auto-set
+    save('visited', true);
+    return;
+  }
   if (!visited) {
     $('#welcomeOverlay').style.display = 'flex';
   }
@@ -1739,6 +1742,14 @@ async function init() {
 }
 
 init();
+
+// Safety net: flush memStore to localStorage on page unload
+window.addEventListener('beforeunload', () => {
+  for (const [key, val] of memStore) {
+    try { localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val)); } catch {}
+  }
+  saveLastBackupTime();
+});
 </script>
 </body>
 </html>
