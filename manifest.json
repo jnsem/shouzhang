@@ -1,9 +1,17 @@
 {
   "name": "治愈系全能规划手帐",
   "short_name": "规划手帐",
-  "start_url": ".",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#FAF3E0",
   "theme_color": "#E8A87C",
-  "icons": []
+  "description": "一本治愈系的电子规划手帐，随时随地记录生活",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }

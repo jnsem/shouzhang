@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#FAF3E0"/>
+  <rect x="60" y="100" width="392" height="312" rx="24" fill="#FFFDF7" stroke="#E8A87C" stroke-width="4"/>
+  <rect x="90" y="80" width="332" height="50" rx="12" fill="#E8A87C"/>
+  <text x="256" y="115" text-anchor="middle" font-size="28" font-weight="bold" fill="#FFF" font-family="sans-serif">治愈系规划手帐</text>
+  <rect x="110" y="180" width="292" height="30" rx="8" fill="#f0e8d8"/>
+  <rect x="110" y="220" width="292" height="30" rx="8" fill="#f0e8d8"/>
+  <rect x="110" y="260" width="292" height="30" rx="8" fill="#f0e8d8"/>
+  <rect x="110" y="300" width="292" height="30" rx="8" fill="#f0e8d8"/>
+  <circle cx="130" cy="195" r="8" fill="#A8D5BA"/>
+  <circle cx="130" cy="235" r="8" fill="#E8A87C"/>
+  <circle cx="130" cy="275" r="8" fill="#D4C5F9"/>
+  <circle cx="130" cy="315" r="8" fill="#A8D5BA"/>
+  <text x="256" y="380" text-anchor="middle" font-size="48" fill="#E8A87C">📔✨</text>
+</svg>
