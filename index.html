@@ -470,11 +470,6 @@ input[type="range"]::-webkit-slider-thumb {
 </style>
 </head>
 <body>
-<div id="browserHint" style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#FFF3E0;border-bottom:2px solid #E8A87C;padding:14px 16px;text-align:center;font-size:14px;color:#5D4E37;font-family:-apple-system,sans-serif;display:block;">
-  ⚠️ <b>请在浏览器中打开</b>以获得完整体验<br>
-  <span style="font-size:12px;color:#8B7E6A;">当前App内查看仅可预览，请用 Safari / Chrome 打开此文件</span>
-</div>
-<script>setTimeout(function(){var h=document.getElementById('browserHint');if(h)h.style.display='none';},1);</script>
 <div class="app-container" id="appContainer">
   <div class="main-content" id="mainContent">
     <!-- ==================== HOME PAGE ==================== -->
@@ -797,16 +792,15 @@ input[type="range"]::-webkit-slider-thumb {
 </div>
 
 <script>
-// ==================== DATA MANAGER (IndexedDB) ====================
+// ==================== DATA MANAGER (IndexedDB + localStorage) ====================
 const PREFIX = 'journal_';
 const DB_NAME = 'journal_db';
 const DB_STORE = 'journal_store';
 let dbReady = false;
-const memStore = new Map(); // in-memory sync cache
+const memStore = new Map();
 
 function gk(key) { return PREFIX + key; }
 
-// Open IndexedDB
 function openDB() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, 1);
@@ -816,10 +810,8 @@ function openDB() {
   });
 }
 
-// Load all data from IndexedDB into memory
 async function initDB() {
   try {
-    // Quick test: is IndexedDB available?
     if (!window.indexedDB) throw new Error('No IndexedDB');
     const db = await openDB();
     const tx = db.transaction(DB_STORE, 'readonly');
@@ -836,26 +828,24 @@ async function initDB() {
     }
     db.close();
     dbReady = true;
-    return true;
   } catch(e) {
-    // Silent fallback: load from localStorage into memStore
     console.warn('IndexedDB unavailable, using localStorage');
     dbReady = false;
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith(PREFIX)) {
-        try { memStore.set(key, JSON.parse(localStorage.getItem(key))); }
-        catch { memStore.set(key, localStorage.getItem(key)); }
-      }
-    }
-    return true; // success, just without IndexedDB
   }
+  // Always merge localStorage data (may be fresher from beforeunload)
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith(PREFIX)) {
+      try { memStore.set(key, JSON.parse(localStorage.getItem(key))); }
+      catch { memStore.set(key, localStorage.getItem(key)); }
+    }
+  }
+  return true;
 }
 
 function save(key, val) {
   memStore.set(gk(key), val);
   saveLastBackupTime();
-  // Sync localStorage backup (always completes, even if page killed)
   try { localStorage.setItem(gk(key), JSON.stringify(val)); } catch {}
   if (dbReady) {
     (async () => {
@@ -872,7 +862,6 @@ function save(key, val) {
 function load(key, def) {
   const v = memStore.get(gk(key));
   if (v !== undefined) return v;
-  // Fallback: try localStorage (sync, always works)
   try { const lv = localStorage.getItem(gk(key)); if (lv !== null) { const p = JSON.parse(lv); memStore.set(gk(key), p); return p; } }
   catch {}
   return def;
@@ -882,6 +871,8 @@ function todayKey() {
   const d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
+
+
 
 // ==================== STATE ====================
 let currentPage = 'home';
@@ -909,10 +900,10 @@ function switchPage(pageName) {
   const navEl = document.querySelector(`.nav-item[data-page="${pageName}"]`);
   if (navEl) navEl.classList.add('active');
   $('#mainContent').scrollTop = 0;
-  if (pageName === 'home') renderHome();
+  if (pageName === 'home') { renderHome(); }
   if (pageName === 'habits') renderHabits();
   if (pageName === 'mood') renderMoodPage();
-  if (pageName === 'plan') renderPlanPage();
+  if (pageName === 'plan') { renderPlanPage(); }
   if (pageName === 'more') renderMorePage();
 }
 
@@ -1642,28 +1633,18 @@ function saveLastBackupTime() {
 
 function getLastModified() {
   const ts = memStore.get(gk('last_modified')) || 0;
-  if (!ts) return '暂无记录';
+  if (!ts) return 'No records';
   const d = new Date(ts);
-  return d.getFullYear() + '/' + (d.getMonth()+1) + '/' + d.getDate() + ' ' +
-    String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  return d.getFullYear() + '/' + (d.getMonth()+1) + '/' + d.getDate();
 }
 
 async function exportAll() {
-  // Also sync from localStorage fallback if needed
   const data = {};
-  if (!dbReady) {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key.startsWith(PREFIX)) {
-        try { data[key.replace(PREFIX, '')] = JSON.parse(localStorage.getItem(key)); }
-        catch { data[key.replace(PREFIX, '')] = localStorage.getItem(key); }
-      }
-    }
-  }
-  // Merge memStore data
-  for (const [key, val] of memStore) {
-    if (key.startsWith(PREFIX)) {
-      data[key.replace(PREFIX, '')] = val;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith(PREFIX)) {
+      try { data[key.replace(PREFIX, '')] = JSON.parse(localStorage.getItem(key)); }
+      catch { data[key.replace(PREFIX, '')] = localStorage.getItem(key); }
     }
   }
   const blob = new Blob([JSON.stringify({ version:1, exported:Date.now(), data })], {type:'application/json'});
@@ -1678,22 +1659,12 @@ async function exportAll() {
 
 async function importAll(file) {
   const reader = new FileReader();
-  reader.onload = async function(e) {
+  reader.onload = function(e) {
     try {
       const json = JSON.parse(e.target.result);
       if (!json.data) { alert('❌ 无效的备份文件'); return; }
       for (const [key, val] of Object.entries(json.data)) {
-        memStore.set(gk(key), val);
-        if (dbReady) {
-          try {
-            const db = await openDB();
-            const tx = db.transaction(DB_STORE, 'readwrite');
-            tx.objectStore(DB_STORE).put(val, gk(key));
-            db.close();
-          } catch {}
-        } else {
-          try { localStorage.setItem(gk(key), typeof val === 'string' ? val : JSON.stringify(val)); } catch {}
-        }
+        try { localStorage.setItem(gk(key), typeof val === 'string' ? val : JSON.stringify(val)); } catch {}
       }
       alert('✅ 数据已恢复！页面即将刷新。');
       location.reload();
@@ -1718,11 +1689,20 @@ document.getElementById('importFile').addEventListener('change', (e) => {
 // ==================== WELCOME ====================
 function checkWelcome() {
   const visited = load('visited', false);
-  // Also check if there's any data in storage (don't show welcome if data exists)
-  if (!visited && memStore.size > 0) {
-    // Data exists but visited flag missing - auto-set
-    save('visited', true);
-    return;
+  // 二次检查：即使没有visited标记，如果localStorage中已有手帐数据，也不显示欢迎页
+  if (!visited) {
+    let hasData = false;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(PREFIX) && k !== gk('visited') && k !== gk('last_modified')) {
+        hasData = true;
+        break;
+      }
+    }
+    if (hasData) {
+      save('visited', true);
+      return;
+    }
   }
   if (!visited) {
     $('#welcomeOverlay').style.display = 'flex';
@@ -1733,25 +1713,20 @@ $('#welcomeClose').addEventListener('click', () => {
   save('visited', true);
 });
 
+
+
 // ==================== INIT ====================
 async function init() {
   try {
     await initDB();
   } catch(e) {
-    console.warn('initDB error, continuing with empty storage');
+    console.warn('initDB error');
     dbReady = false;
   }
-  
-  // Request persistent storage
-  if (navigator.storage && navigator.storage.persist) {
-    try { await navigator.storage.persist(); } catch {}
-  }
-  
   try {
     initAutoSave();
     checkWelcome();
     renderHome();
-
     $$('[data-key]').forEach(el => {
       if (!el.closest('#sub-plan-day') && !el.closest('#sub-mood-emotion') && !el.closest('#sub-mood-gratitude') && !el.closest('#sub-more-note')) {
         el.value = load(el.dataset.key, '');
@@ -1759,20 +1734,22 @@ async function init() {
     });
   } catch(e) {
     console.error('Init error:', e);
-    // If everything fails, at least show the welcome screen
-    try { $('#welcomeOverlay').style.display = 'flex'; } catch {}
   }
 }
-
 init();
-
-// Safety net: flush memStore to localStorage on page unload
 window.addEventListener('beforeunload', () => {
   for (const [key, val] of memStore) {
     try { localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val)); } catch {}
   }
-  saveLastBackupTime();
 });
+// ==================== PWA Service Worker ====================
+try {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  }
+} catch(e) {}
 </script>
+
+
 </body>
 </html>
