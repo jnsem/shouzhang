@@ -1723,6 +1723,15 @@ async function init() {
     console.warn('initDB error');
     dbReady = false;
   }
+  // 请求持久化存储权限，防止华为等国产手机浏览器自动清理数据
+  try {
+    if (navigator.storage && navigator.storage.persist) {
+      const granted = await navigator.storage.persist();
+      console.log('持久化存储:', granted ? '✅ 已授权' : '❌ 未授权');
+    }
+  } catch(e) {
+    console.warn('storage.persist error:', e);
+  }
   try {
     initAutoSave();
     checkWelcome();
